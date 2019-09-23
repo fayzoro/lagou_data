@@ -10,9 +10,7 @@
 2019/9/23 11:34   zyfei      1.0         None
 '''
 
-import pymysql
-import time
-from ../tools.mysql_connect import MysqlConnect
+from mysql_connect import MysqlConnect
 from queue import Queue
 
 class SaveDataIntoMysql(object):
@@ -22,6 +20,7 @@ class SaveDataIntoMysql(object):
         self.mysql_connect = MysqlConnect('lagou_data_shuju')
         self.base_sql = ''
         self.data_queue = Queue()
+        self.num = 0
 
     def get_data_queue(self):
         with open(self.data_file, 'r', encoding='utf-8') as f:
@@ -31,14 +30,16 @@ class SaveDataIntoMysql(object):
                     break
                 datas = position.split(';')
                 self.data_queue.put(datas)
+                self.num += 1
 
     def save_data_into_mysql(self):
         while True:
             if self.data_queue.empty():
                 break
             datas = self.data_queue.get()
-            insert_sql = 'insert into lagou_data_shuju_test(companyFullName, positionName, createTime, companyShortName, education, city, jobNature, industryField, financeStage, positionAdvantage, companySize, district, salary_min, salary_max) values(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'
+            insert_sql = 'insert into lagou_data_shuju_test2(companyFullName, positionName, createTime, companyShortName, education, city, jobNature, industryField, financeStage, positionAdvantage, companySize, district, salary_min, salary_max) values(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'
             self.mysql_connect.work_on_data(insert_sql, datas)
+            print('还剩余%d条记录' % self.num)
             self.data_queue.task_done()
 
     def run(self):
@@ -49,4 +50,3 @@ class SaveDataIntoMysql(object):
 if __name__ == '__main__':
     save_data_into_sql = SaveDataIntoMysql()
     save_data_into_sql.run()
-
