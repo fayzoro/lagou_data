@@ -10,9 +10,9 @@
 2019/9/18 15:27   zyfei      1.0         None
 '''
 
+# import numpy as np
+# import sqlalchemy
 import pandas
-# import matplotlib
-# import matplotlib.pyplot as plt
 
 
 data_columns = ['companyFullName', 'positionName', 'createTime', 'companyShortName', 'city', 'education', 'jobNature', 'salary', 'industryField', 'financeStage', 'positionAdvantage', 'companySize', 'companyLabelList', 'district', 'positionLables']
@@ -40,14 +40,46 @@ education_value_counts = educations.value_counts()
 print(education_value_counts)
 # education_value_counts.plot(kind='bar')
 
+jobNatures = pandas.Series(data_lagou.jobNature)
+jobNature_value_counts = jobNatures.value_counts()
+print(jobNature_value_counts)
+# jobNature_value_counts.plot(kind='bar')
+
 # 处理 salary 列
 salaries = pandas.Series(data_lagou.salary)
 print(salaries.head())
 
 def str_to_str_into_int(salary):
     salary = salary
-    salary_min, salary_max = salary[:-1].split('-')
-    salary_min = int(salary_min)
-    salary_max = int(salary_max)
+    salary_min, salary_max = salary.strip().split('-')
+    # print(salary_min, salary_max)
+    salary_min = int(salary_min[:-1])
+    salary_max = int(salary_max[:-1])
     return salary_min, salary_max
 
+bar = np.frompyfunc(str_to_str_into_int, 1, 2)
+print(bar)
+
+salary_min, salary_max = bar(salaries)
+# print(salary_min, salary_max)
+
+# 将薪资范围调整为 两个字段，一个最小， 一个最大
+columns = data_lagou.columns.tolist()
+print(columns)
+columns.extend(['salary_min', 'salary_max'])
+print(columns)
+data_lagou.reindex(columns=columns)
+data_lagou['salary_min'] = salary_min
+data_lagou['salary_max'] = salary_max
+print(data_lagou.describe())
+
+cols = list(data_lagou)
+cols.insert(4, cols.pop(cols.index('education')))
+data_lagou = data_lagou.loc[:, cols]
+
+data_lagou.drop('salary', 1, inplace=True)
+data_lagou.drop('companyLabelList', 1, inplace=True)
+data_lagou.drop('positionLables', 1, inplace=True)
+print(data_lagou.columns.tolist())
+
+data_lagou.to_csv('../txt/position_df.csv', sep=';', header=None, index=None)
